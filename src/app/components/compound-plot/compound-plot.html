@@ -27,7 +27,9 @@
           [data]="plotData" 
           [layout]="plotLayout" 
           [config]="plotOptions"
-          [useResizeHandler]="true">
+          [useResizeHandler]="true"
+          [divId]="plotDivId"
+          (initialized)="onPlotInitialized($event)">
         </plotly-plot>
       } @else {
         <div class="no-plot">

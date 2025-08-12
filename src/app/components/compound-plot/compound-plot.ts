@@ -35,6 +35,9 @@ export class CompoundPlot implements OnInit, OnDestroy {
   private themeService = inject(ThemeService);
   private updateInterval?: number;
   
+  plotDivId = 'compound-plot-div';
+  private graphDiv: any = null;
+  
   selectedCompound = signal<string>('');
   availableCompounds = signal<string[]>([]);
   plotData: any[] = [];
@@ -606,22 +609,22 @@ export class CompoundPlot implements OnInit, OnDestroy {
     return annotations;
   }
 
-  exportPlot(format: string = 'png'): void {
-    if (this.plotData.length === 0) return;
+  onPlotInitialized(event: any): void {
+    this.graphDiv = event;
+  }
+
+  async exportPlot(format: string = 'png'): Promise<void> {
+    if (this.plotData.length === 0 || !this.graphDiv) return;
     
-    const plotElement = document.querySelector('plotly-plot .plotly') as HTMLElement;
-    if (plotElement) {
-      this.plotlyService.getPlotly().then((Plotly: any) => {
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
-        const filename = `${this.selectedCompound()}_plot_${timestamp}`;
-        
-        Plotly.downloadImage(plotElement, {
-          format: format,
-          width: 800,
-          height: 500,
-          filename: filename
-        });
-      });
-    }
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+    const filename = `${this.selectedCompound()}_plot_${timestamp}`;
+    
+    const plot = await this.plotlyService.getPlotly();
+    await plot.downloadImage(this.graphDiv, {
+      format: format,
+      filename: filename,
+      width: this.plotLayout.width || 800,
+      height: this.plotLayout.height || 600
+    });
   }
 }
