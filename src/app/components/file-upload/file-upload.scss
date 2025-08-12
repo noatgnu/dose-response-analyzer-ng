@@ -1,0 +1,123 @@
+.file-upload {
+  .drop-zone {
+    border: 2px dashed var(--mat-sys-outline);
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--mat-sys-surface-variant);
+    margin-bottom: 24px;
+
+    &:hover {
+      border-color: var(--mat-sys-primary);
+      background: var(--mat-sys-surface-container-low);
+    }
+
+    &.drag-over {
+      border-color: var(--mat-sys-primary);
+      background: var(--mat-sys-primary-container);
+      transform: scale(1.02);
+    }
+
+    &.uploading {
+      cursor: default;
+      border-color: var(--mat-sys-tertiary);
+      background: var(--mat-sys-tertiary-container);
+    }
+
+    .upload-content {
+      .upload-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: var(--mat-sys-outline);
+        margin-bottom: 16px;
+      }
+
+      h3 {
+        margin: 0 0 8px 0;
+        color: var(--mat-sys-on-surface);
+        font-weight: 500;
+      }
+
+      p {
+        margin: 0 0 16px 0;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .file-info {
+        background: var(--mat-sys-surface);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+        border: 1px solid var(--mat-sys-outline);
+
+        p {
+          margin: 4px 0;
+          font-size: 14px;
+        }
+      }
+
+      button {
+        margin-top: 8px;
+
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+
+    .upload-progress {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+
+      p {
+        margin: 0;
+        color: var(--mat-sys-tertiary);
+        font-weight: 500;
+      }
+    }
+  }
+
+  .format-info {
+    h4 {
+      margin: 0 0 16px 0;
+      color: var(--mat-sys-on-surface);
+      font-weight: 500;
+    }
+
+    .format-example {
+      background: var(--mat-sys-surface-variant);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-left: 4px solid var(--mat-sys-primary);
+
+      pre {
+        margin: 0;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        color: var(--mat-sys-on-surface);
+        white-space: pre;
+      }
+    }
+
+    .format-requirements {
+      margin: 0;
+      padding-left: 24px;
+
+      li {
+        margin-bottom: 8px;
+        color: var(--mat-sys-on-surface-variant);
+        font-size: 14px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}

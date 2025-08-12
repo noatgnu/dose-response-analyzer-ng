@@ -1,0 +1,105 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>analytics</mat-icon>
+      Analysis Results
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (dataSource.length > 0) {
+      <mat-table [dataSource]="dataSource" class="results-table">
+        <!-- Compound Column -->
+        <ng-container matColumnDef="compound">
+          <mat-header-cell *matHeaderCellDef>Compound</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            <strong>{{ element.compound }}</strong>
+          </mat-cell>
+        </ng-container>
+
+        <!-- Model Column -->
+        <ng-container matColumnDef="model">
+          <mat-header-cell *matHeaderCellDef>Model</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            {{ element.model || 'N/A' }}
+          </mat-cell>
+        </ng-container>
+
+        <!-- IC50 Column -->
+        <ng-container matColumnDef="ic50">
+          <mat-header-cell *matHeaderCellDef>IC50</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            @if (element.ic50) {
+              {{ element.ic50 | number:'1.3-3' }}
+            } @else {
+              N/A
+            }
+          </mat-cell>
+        </ng-container>
+
+        <!-- RMSE Column -->
+        <ng-container matColumnDef="rmse">
+          <mat-header-cell *matHeaderCellDef>RMSE</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            @if (element.rmse !== undefined) {
+              {{ element.rmse | number:'1.4-4' }}
+            } @else {
+              N/A
+            }
+          </mat-cell>
+        </ng-container>
+
+        <!-- AIC Column -->
+        <ng-container matColumnDef="aic">
+          <mat-header-cell *matHeaderCellDef>AIC</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            @if (element.aic !== undefined) {
+              {{ element.aic | number:'1.2-2' }}
+            } @else {
+              N/A
+            }
+          </mat-cell>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            <button mat-icon-button (click)="exportCompoundData(element)" 
+                    matTooltip="Export compound data">
+              <mat-icon>file_download</mat-icon>
+            </button>
+          </mat-cell>
+        </ng-container>
+
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+      </mat-table>
+    } @else {
+      <div class="no-results" style="text-align: center; padding: 40px; color: #666;">
+        <mat-icon style="font-size: 48px; margin-bottom: 16px;">info</mat-icon>
+        <p>No analysis results available. Run analysis to see results.</p>
+      </div>
+    }
+  </mat-card-content>
+  
+  @if (dataSource.length > 0) {
+    <mat-card-actions align="end">
+      <mat-form-field appearance="outline" style="width: 80px; margin-right: 8px;">
+        <mat-select [(value)]="exportFormat">
+          <mat-option value="csv">CSV</mat-option>
+          <mat-option value="txt">TXT</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-button (click)="exportAllModels(exportFormat)" [disabled]="dataSource.length === 0" 
+              matTooltip="Export all model fits for all compounds">
+        <mat-icon>table_chart</mat-icon>
+        Summary Table
+      </button>
+      <button mat-button (click)="exportBestModels(exportFormat)" [disabled]="dataSource.length === 0" 
+              matTooltip="Export best model for each compound">
+        <mat-icon>stars</mat-icon>
+        Best Models
+      </button>
+    </mat-card-actions>
+  }
+</mat-card>

@@ -1,0 +1,80 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>show_chart</mat-icon>
+      Dose-Response Curve
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <!-- Compound Selector -->
+    @if (availableCompounds().length > 0) {
+      <div class="compound-selector" style="margin-bottom: 20px;">
+        <mat-form-field appearance="outline">
+          <mat-label>Select Compound</mat-label>
+          <mat-select [value]="selectedCompound()" (selectionChange)="onCompoundChange($event.value)">
+            @for (compound of availableCompounds(); track compound) {
+              <mat-option [value]="compound">{{ compound }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+    
+    <!-- Plot -->
+    <div class="plot-container">
+      @if (plotData.length > 0) {
+        <plotly-plot 
+          [data]="plotData" 
+          [layout]="plotLayout" 
+          [config]="plotOptions"
+          [useResizeHandler]="true">
+        </plotly-plot>
+      } @else {
+        <div class="no-plot">
+          <mat-icon>info</mat-icon>
+          <p>{{ selectedCompound() ? 'No data available for selected compound' : 'Select a compound to view dose-response curve' }}</p>
+        </div>
+      }
+    </div>
+    
+    <!-- Compound Metrics -->
+    @if (selectedCompound() && compoundMetrics) {
+      <div class="compound-metrics">
+        <h4>{{ selectedCompound() }} Metrics</h4>
+        <div class="metrics-grid">
+          <div class="metric">
+            <span class="label">Model:</span>
+            <span class="value">{{ compoundMetrics.model || 'N/A' }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">IC50:</span>
+            <span class="value">{{ compoundMetrics.ic50 ? (compoundMetrics.ic50 | number:'1.2-2') : 'N/A' }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">RMSE:</span>
+            <span class="value">{{ compoundMetrics.rmse ? (compoundMetrics.rmse | number:'1.4-4') : 'N/A' }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">AIC:</span>
+            <span class="value">{{ compoundMetrics.aic ? (compoundMetrics.aic | number:'1.2-2') : 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </mat-card-content>
+  
+  @if (plotData.length > 0) {
+    <mat-card-actions align="end">
+      <mat-form-field appearance="outline" style="width: 80px; margin-right: 8px;">
+        <mat-select [(value)]="exportFormat">
+          <mat-option value="png">PNG</mat-option>
+          <mat-option value="svg">SVG</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-button (click)="exportPlot(exportFormat)" [disabled]="!plotData.length">
+        <mat-icon>download</mat-icon>
+        Export Plot
+      </button>
+    </mat-card-actions>
+  }
+</mat-card>

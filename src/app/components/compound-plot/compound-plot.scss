@@ -1,0 +1,41 @@
+.no-plot {
+  text-align: center;
+  padding: 40px;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+}
+
+.compound-metrics {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--mat-sys-surface-variant);
+  border-radius: 8px;
+
+  h4 {
+    margin: 0 0 12px 0;
+    color: var(--mat-sys-on-surface);
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+
+    .metric {
+      .label {
+        font-weight: 500;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .value {
+        margin-left: 8px;
+        color: var(--mat-sys-on-surface);
+      }
+    }
+  }
+}

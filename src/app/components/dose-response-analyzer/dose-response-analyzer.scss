@@ -1,0 +1,155 @@
+.dose-response-analyzer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  .sidenav-container {
+    flex: 1;
+  }
+
+  .sidenav {
+    width: 350px;
+    padding: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .main-content {
+    padding: 16px;
+    overflow-y: auto;
+  }
+  
+  .progress-container {
+    padding: 16px;
+    background: var(--mat-sys-primary-container);
+    margin-bottom: 16px;
+    border-radius: 4px;
+    border-left: 4px solid var(--mat-sys-primary);
+    
+    .progress-text {
+      font-size: 14px;
+      color: var(--mat-sys-on-primary-container);
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    
+    .progress-percentage {
+      font-size: 12px;
+      color: var(--mat-sys-on-surface-variant);
+      text-align: right;
+      margin-top: 4px;
+    }
+    
+    mat-progress-bar {
+      height: 6px;
+      border-radius: 3px;
+    }
+  }
+
+  .error-card {
+    margin-bottom: 16px;
+    background-color: var(--mat-sys-error-container);
+    border-left: 4px solid var(--mat-sys-error);
+
+    .error-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--mat-sys-on-error-container);
+    }
+  }
+
+  .upload-section {
+    max-width: 800px;
+    margin: 0 auto;
+
+    mat-card {
+      mat-card-header {
+        mat-card-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+      }
+    }
+  }
+
+  .data-section {
+    margin-bottom: 24px;
+
+    .data-stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px;
+        background: var(--mat-sys-surface-variant);
+        border-radius: 8px;
+        min-width: 120px;
+
+        strong {
+          font-size: 24px;
+          color: var(--mat-sys-primary);
+          margin-bottom: 4px;
+        }
+
+        span {
+          font-size: 12px;
+          color: var(--mat-sys-on-surface-variant);
+          text-align: center;
+        }
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+
+      button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  .results-section {
+    margin-top: 24px;
+    
+    app-compound-plot {
+      display: block;
+      margin-bottom: 24px;
+    }
+    
+    app-results-table {
+      display: block;
+      margin-bottom: 40px;
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    .sidenav {
+      width: 100%;
+    }
+
+    .data-stats {
+      justify-content: center;
+      
+      .stat-item {
+        min-width: 100px;
+      }
+    }
+  }
+}

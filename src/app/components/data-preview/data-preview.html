@@ -1,0 +1,43 @@
+<div class="data-preview-container" *ngIf="rawData()">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Data Preview</mat-card-title>
+      <mat-card-subtitle *ngIf="dataSummary() as summary">
+        {{ summary.totalRows }} rows × {{ summary.totalColumns }} columns
+      </mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <!-- Column Mapping Info -->
+      <div class="mapping-info" *ngIf="columnMapping() as mapping">
+        <h4>Column Mapping</h4>
+        <div class="mapping-chips">
+          <mat-chip-listbox>
+            <mat-chip selected>Compound: {{ mapping.compound }}</mat-chip>
+            <mat-chip selected>Concentration: {{ mapping.concentration }}</mat-chip>
+            <mat-chip selected>Response: {{ mapping.response }}</mat-chip>
+          </mat-chip-listbox>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="table-container">
+        <table mat-table [dataSource]="previewData()" class="data-table">
+          
+          <!-- Dynamic columns -->
+          <ng-container *ngFor="let column of displayedColumns()" [matColumnDef]="column">
+            <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+            <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+        </table>
+        
+        <div class="preview-note" *ngIf="(rawData()?.length || 0) > 10">
+          Showing first 10 of {{ rawData()?.length }} rows
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

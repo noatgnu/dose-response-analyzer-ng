@@ -1,0 +1,57 @@
+.data-preview-container {
+  margin: 1rem 0;
+}
+
+.mapping-info {
+  margin-bottom: 1rem;
+  
+  h4 {
+    margin-bottom: 0.5rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.mapping-chips {
+  .mat-mdc-chip-listbox {
+    gap: 0.5rem;
+  }
+  
+  .mat-mdc-chip {
+    font-size: 0.75rem;
+  }
+}
+
+.table-container {
+  max-height: 400px;
+  overflow: auto;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 4px;
+}
+
+.data-table {
+  width: 100%;
+  
+  .mat-mdc-header-cell {
+    background-color: var(--mat-sys-surface-variant);
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+  }
+  
+  .mat-mdc-cell {
+    font-size: 0.875rem;
+    padding: 8px;
+  }
+  
+  .mat-mdc-row:hover {
+    background-color: var(--mat-sys-surface-container-low);
+  }
+}
+
+.preview-note {
+  padding: 0.5rem;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.8rem;
+  background-color: var(--mat-sys-surface-variant);
+  border-top: 1px solid var(--mat-sys-outline);
+}

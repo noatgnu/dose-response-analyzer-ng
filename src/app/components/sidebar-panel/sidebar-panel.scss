@@ -1,0 +1,48 @@
+.sidebar-panel {
+  .section-card {
+    margin-bottom: 24px; // Add gap between each section
+  }
+
+  .config-section {
+    margin-bottom: 24px; // Add gap between config sections
+  }
+
+  .column-mapping {
+    mat-form-field {
+      margin-bottom: 24px; // Add spacing between column mapping form fields
+      width: 100%;
+    }
+  }
+
+  .color-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .color-text-field {
+      flex: 1;
+      margin: 0;
+    }
+
+    .color-picker-button {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  .floating-update-button {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 1000;
+
+    .reset-button {
+      align-self: flex-end;
+    }
+  }
+}

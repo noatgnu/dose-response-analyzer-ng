@@ -1,0 +1,150 @@
+<div class="dose-response-analyzer">
+  <!-- Header -->
+  <mat-toolbar color="primary">
+    <button mat-icon-button (click)="drawer.toggle()">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span>Dose-Response Analyzer</span>
+    <span class="spacer"></span>
+    @if (hasData()) {
+      <button mat-raised-button color="accent" (click)="runAnalysis()" [disabled]="isAnalyzing()">
+        @if (isAnalyzing()) {
+          <ng-container>
+            <mat-icon>hourglass_empty</mat-icon>
+            Analyzing...
+          </ng-container>
+        } @else {
+          <ng-container>
+            <mat-icon>analytics</mat-icon>
+            Run Analysis
+          </ng-container>
+        }
+      </button>
+    }
+    <button mat-icon-button (click)="resetAnalysis()" matTooltip="Reset Analysis">
+      <mat-icon>refresh</mat-icon>
+    </button>
+    <app-theme-toggle></app-theme-toggle>
+  </mat-toolbar>
+
+  <!-- Layout with Sidebar -->
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Sidebar -->
+    <mat-sidenav #drawer mode="side" opened class="sidenav">
+      <app-sidebar-panel></app-sidebar-panel>
+    </mat-sidenav>
+
+    <!-- Main Content -->
+    <mat-sidenav-content class="main-content">
+      <!-- Loading Progress -->
+      @if (isAnalyzing()) {
+        <div class="progress-container">
+          @if (analysisProgress(); as progress) {
+            <div class="progress-text">{{ progress.step }}</div>
+            <mat-progress-bar mode="determinate" [value]="progress.progress"></mat-progress-bar>
+            <div class="progress-percentage">{{ progress.progress }}%</div>
+          } @else {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          }
+        </div>
+      }
+
+      <!-- Error Display -->
+      @if (errorMessage()) {
+        <mat-card class="error-card">
+          <mat-card-content>
+            <div class="error-content">
+              <mat-icon color="warn">error</mat-icon>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <!-- Data Upload Section -->
+      @if (!hasData()) {
+        <div class="upload-section">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>upload_file</mat-icon>
+                Data Upload
+              </mat-card-title>
+              <mat-card-subtitle>
+                Upload your dose-response data or load a sample file
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <app-file-upload></app-file-upload>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+
+      <!-- Data Preview and Results -->
+      @if (hasData()) {
+        <div class="data-section">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>table_chart</mat-icon>
+                Data Preview & Analysis
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <!-- Quick stats -->
+              <div class="data-stats">
+                @let summary = doseResponseService.getDataSummary();
+                <div class="stat-item">
+                  <strong>{{ summary.totalRows }}</strong>
+                  <span>Data Points</span>
+                </div>
+                <div class="stat-item">
+                  <strong>{{ summary.compounds.length }}</strong>
+                  <span>Compounds</span>
+                </div>
+                <div class="stat-item">
+                  <strong>{{ summary.concentrationRange[0] | number:'1.2-2' }} - {{ summary.concentrationRange[1] | number:'1.2-2' }}</strong>
+                  <span>Concentration Range</span>
+                </div>
+              </div>
+
+              <!-- Data Preview Table -->
+              <app-data-preview></app-data-preview>
+
+              <!-- Action buttons -->
+              <div class="action-buttons">
+                @if (!hasResults()) {
+                  <button mat-raised-button color="primary" (click)="runAnalysis()" [disabled]="isAnalyzing()">
+                    @if (isAnalyzing()) {
+                      <ng-container>
+                        <mat-icon>hourglass_empty</mat-icon>
+                        Analyzing...
+                      </ng-container>
+                    } @else {
+                      <ng-container>
+                        <mat-icon>analytics</mat-icon>
+                        Run Dose-Response Analysis
+                      </ng-container>
+                    }
+                  </button>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+
+      <!-- Results Section -->
+      @if (hasResults()) {
+        <div class="results-section">
+          <!-- Plot Section -->
+          <app-compound-plot></app-compound-plot>
+          
+          <!-- Results Table -->
+          <app-results-table></app-results-table>
+        </div>
+      }
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

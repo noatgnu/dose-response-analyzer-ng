@@ -1,0 +1,43 @@
+<div class="file-upload">
+  <!-- Hidden file input -->
+  <input
+    #fileInput
+    type="file"
+    accept=".csv,.txt,.tsv"
+    (change)="onFileSelected($event)"
+    style="display: none;">
+
+  <!-- Drop zone -->
+  <div
+    class="drop-zone"
+    [class.drag-over]="dragOver"
+    [class.uploading]="isUploading"
+    (click)="openFileDialog()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onFileDrop($event)">
+
+    @if (isUploading) {
+      <div class="upload-progress">
+        <mat-spinner diameter="48"></mat-spinner>
+        <p>Uploading and processing file...</p>
+      </div>
+    } @else {
+      <div class="upload-content">
+        <mat-icon class="upload-icon">cloud_upload</mat-icon>
+        <h3>Drop your data file here</h3>
+        <p>or click to browse</p>
+
+        <div class="file-info">
+          <p><strong>Supported formats:</strong> CSV, TXT, TSV</p>
+          <p><strong>Max file size:</strong> 10MB</p>
+        </div>
+
+        <button mat-raised-button color="primary" type="button">
+          <mat-icon>folder_open</mat-icon>
+          Choose File
+        </button>
+      </div>
+    }
+  </div>
+</div>

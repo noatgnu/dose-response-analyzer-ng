@@ -1,0 +1,343 @@
+<div class="sidebar-panel">
+  <!-- Sample Files -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>folder_open</mat-icon>
+        Sample Files
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="sample-files">
+        @for (file of sampleFiles(); track file) {
+          <button mat-stroked-button (click)="loadSampleFile(file)" class="sample-file-btn">
+            <mat-icon>description</mat-icon>
+            {{ file }}
+          </button>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Column Mapping -->
+  @if (hasData()) {
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>view_column</mat-icon>
+          Column Mapping
+        </mat-card-title>
+        <mat-card-subtitle>
+          Map your data columns to the expected format
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="column-mapping">
+          <!-- Compound Column -->
+          <mat-form-field appearance="outline">
+            <mat-label>Compound Column</mat-label>
+            <mat-select
+              [value]="pendingColumnMapping().compound"
+              (selectionChange)="updatePendingColumnMapping('compound', $event.value)">
+              @for (column of availableColumns(); track column) {
+                <mat-option [value]="column">{{ column }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Column containing compound/drug names</mat-hint>
+          </mat-form-field>
+
+          <!-- Concentration Column -->
+          <mat-form-field appearance="outline">
+            <mat-label>Concentration Column</mat-label>
+            <mat-select
+              [value]="pendingColumnMapping().concentration"
+              (selectionChange)="updatePendingColumnMapping('concentration', $event.value)">
+              @for (column of availableColumns(); track column) {
+                <mat-option [value]="column">{{ column }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Column containing dose/concentration values</mat-hint>
+          </mat-form-field>
+
+          <!-- Response Column -->
+          <mat-form-field appearance="outline">
+            <mat-label>Response Column</mat-label>
+            <mat-select
+              [value]="pendingColumnMapping().response"
+              (selectionChange)="updatePendingColumnMapping('response', $event.value)">
+              @for (column of availableColumns(); track column) {
+                <mat-option [value]="column">{{ column }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Column containing response/measurement values</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Plot Customization -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>tune</mat-icon>
+        Plot Customization
+      </mat-card-title>
+      <mat-card-subtitle>
+        Customize the appearance of your plots
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="plot-config">
+        <!-- Plot Dimensions -->
+        <div class="config-section">
+          <h4>Plot Dimensions</h4>
+
+          <div class="slider-field">
+            <label>Plot Width: {{ pendingPlotConfig().plotWidth }}</label>
+            <mat-slider min="400" max="1200" step="50" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().plotWidth" (valueChange)="updatePendingPlotConfig('plotWidth', $event)">
+            </mat-slider>
+          </div>
+
+          <div class="slider-field">
+            <label>Plot Height: {{ pendingPlotConfig().plotHeight }}</label>
+            <mat-slider min="300" max="900" step="50" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().plotHeight" (valueChange)="updatePendingPlotConfig('plotHeight', $event)">
+            </mat-slider>
+          </div>
+          
+          <div class="slider-field">
+            <label>Text Size: {{ pendingPlotConfig().textSize || 12 }}</label>
+            <mat-slider min="8" max="24" step="1" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().textSize || 12" (valueChange)="updatePendingPlotConfig('textSize', $event)">
+            </mat-slider>
+          </div>
+          
+          <div class="slider-field">
+            <label>Title Size: {{ pendingPlotConfig().titleSize || 16 }}</label>
+            <mat-slider min="10" max="28" step="1" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().titleSize || 16" (valueChange)="updatePendingPlotConfig('titleSize', $event)">
+            </mat-slider>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Data Points -->
+        <div class="config-section">
+          <h4>Data Points</h4>
+
+          <div class="slider-field">
+            <label>Point Size: {{ pendingPlotConfig().dataPointSize }}</label>
+            <mat-slider min="4" max="20" step="2" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().dataPointSize" (valueChange)="updatePendingPlotConfig('dataPointSize', $event)">
+            </mat-slider>
+          </div>
+
+          <div class="color-input-row">
+            <mat-form-field appearance="outline" class="color-text-field">
+              <mat-label>Point Color</mat-label>
+              <input matInput readonly [value]="pendingPlotConfig().dataPointColor">
+            </mat-form-field>
+            <ngx-colors ngx-colors-trigger
+                        class="color-picker-button"
+                        [(ngModel)]="pendingPlotConfig().dataPointColor"
+                        (ngModelChange)="updatePendingPlotConfig('dataPointColor', $event)">
+            </ngx-colors>
+          </div>
+
+          <div class="slider-field">
+            <label>Point Opacity: {{ pendingPlotConfig().dataPointAlpha }}</label>
+            <mat-slider min="0.1" max="1" step="0.1" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().dataPointAlpha" (valueChange)="updatePendingPlotConfig('dataPointAlpha', $event)">
+            </mat-slider>
+          </div>
+          
+          <mat-form-field appearance="outline">
+            <mat-label>Point Marker</mat-label>
+            <mat-select [value]="pendingPlotConfig().pointMarkerStyle" (valueChange)="updatePendingPlotConfig('pointMarkerStyle', $event)">
+              <mat-option value="circle">Circle (●)</mat-option>
+              <mat-option value="square">Square (■)</mat-option>
+              <mat-option value="triangle-up">Triangle Up (▲)</mat-option>
+              <mat-option value="triangle-down">Triangle Down (▼)</mat-option>
+              <mat-option value="diamond">Diamond (◆)</mat-option>
+              <mat-option value="cross">Cross (+)</mat-option>
+              <mat-option value="x">X (×)</mat-option>
+              <mat-option value="star">Star (★)</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Line Settings -->
+        <div class="config-section">
+          <h4>Fitted Lines</h4>
+
+          <div class="slider-field">
+            <label>Line Thickness: {{ pendingPlotConfig().lineThickness }}</label>
+            <mat-slider min="1" max="6" step="0.5" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().lineThickness" (valueChange)="updatePendingPlotConfig('lineThickness', $event)">
+            </mat-slider>
+          </div>
+
+          <div class="color-input-row">
+            <mat-form-field appearance="outline" class="color-text-field">
+              <mat-label>Line Color</mat-label>
+              <input matInput readonly [value]="pendingPlotConfig().lineColor">
+            </mat-form-field>
+            <ngx-colors ngx-colors-trigger
+                        class="color-picker-button"
+                        [(ngModel)]="pendingPlotConfig().lineColor"
+                        (ngModelChange)="updatePendingPlotConfig('lineColor', $event)">
+            </ngx-colors>
+          </div>
+
+          <div class="slider-field">
+            <label>Line Opacity: {{ pendingPlotConfig().lineAlpha }}</label>
+            <mat-slider min="0.1" max="1" step="0.1" discrete>
+              <input matSliderThumb [value]="pendingPlotConfig().lineAlpha" (valueChange)="updatePendingPlotConfig('lineAlpha', $event)">
+            </mat-slider>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Reference Lines -->
+        <div class="config-section">
+          <h4>Reference Lines</h4>
+
+          <mat-checkbox
+            [checked]="pendingPlotConfig().showIc50Lines"
+            (change)="updatePendingPlotConfig('showIc50Lines', $event.checked)">
+            Show IC50 Reference Lines
+          </mat-checkbox>
+
+          @if (pendingPlotConfig().showIc50Lines) {
+            <div>
+              <div class="color-input-row">
+                <mat-form-field appearance="outline" class="color-text-field">
+                  <mat-label>IC50 Vertical Line Color</mat-label>
+                  <input matInput readonly [value]="pendingPlotConfig().ic50VerticalLineColor">
+                </mat-form-field>
+                <ngx-colors ngx-colors-trigger
+                            class="color-picker-button"
+                            [(ngModel)]="pendingPlotConfig().ic50VerticalLineColor"
+                            (ngModelChange)="updatePendingPlotConfig('ic50VerticalLineColor', $event)">
+                </ngx-colors>
+              </div>
+
+              <div class="color-input-row">
+                <mat-form-field appearance="outline" class="color-text-field">
+                  <mat-label>IC50 Horizontal Line Color</mat-label>
+                  <input matInput readonly [value]="pendingPlotConfig().ic50HorizontalLineColor">
+                </mat-form-field>
+                <ngx-colors ngx-colors-trigger
+                            class="color-picker-button"
+                            [(ngModel)]="pendingPlotConfig().ic50HorizontalLineColor"
+                            (ngModelChange)="updatePendingPlotConfig('ic50HorizontalLineColor', $event)">
+                </ngx-colors>
+              </div>
+            </div>
+          }
+
+          <mat-checkbox
+            [checked]="pendingPlotConfig().showDmaxLines"
+            (change)="updatePendingPlotConfig('showDmaxLines', $event.checked)">
+            Show Dmax Reference Lines
+          </mat-checkbox>
+
+          @if (pendingPlotConfig().showDmaxLines) {
+            <div>
+              <div class="color-input-row">
+                <mat-form-field appearance="outline" class="color-text-field">
+                  <mat-label>Observed Dmax Color</mat-label>
+                  <input matInput readonly [value]="pendingPlotConfig().observedDmaxColor">
+                </mat-form-field>
+                <ngx-colors ngx-colors-trigger
+                            class="color-picker-button"
+                            [(ngModel)]="pendingPlotConfig().observedDmaxColor"
+                            (ngModelChange)="updatePendingPlotConfig('observedDmaxColor', $event)">
+                </ngx-colors>
+              </div>
+
+              <div class="color-input-row">
+                <mat-form-field appearance="outline" class="color-text-field">
+                  <mat-label>Predicted Dmax Color</mat-label>
+                  <input matInput readonly [value]="pendingPlotConfig().predictedDmaxColor">
+                </mat-form-field>
+                <ngx-colors ngx-colors-trigger
+                            class="color-picker-button"
+                            [(ngModel)]="pendingPlotConfig().predictedDmaxColor"
+                            (ngModelChange)="updatePendingPlotConfig('predictedDmaxColor', $event)">
+                </ngx-colors>
+              </div>
+            </div>
+          }
+
+          <mat-checkbox
+            [checked]="pendingPlotConfig().gridEnabled"
+            (change)="updatePendingPlotConfig('gridEnabled', $event.checked)">
+            Show Grid Lines
+          </mat-checkbox>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Advanced Styling -->
+        <div class="config-section">
+          <h4>Plot Style</h4>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Plot Style</mat-label>
+            <mat-select [value]="pendingPlotConfig().plotStyle" (valueChange)="updatePendingPlotConfig('plotStyle', $event)">
+              <mat-option value="seaborn-v0_8">Seaborn</mat-option>
+              <mat-option value="ggplot">GGPlot</mat-option>
+              <mat-option value="bmh">BMH</mat-option>
+              <mat-option value="classic">Classic</mat-option>
+              <mat-option value="fivethirtyeight">FiveThirtyEight</mat-option>
+              <mat-option value="grayscale">Grayscale</mat-option>
+              <mat-option value="dark_background">Dark Background</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Line Style</mat-label>
+            <mat-select [value]="pendingPlotConfig().lineStyle" (valueChange)="updatePendingPlotConfig('lineStyle', $event)">
+              <mat-option value="solid">Solid (─)</mat-option>
+              <mat-option value="dash">Dashed (- - -)</mat-option>
+              <mat-option value="dot">Dotted (···)</mat-option>
+              <mat-option value="dashdot">Dash-Dot (-·-·)</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Legend Position</mat-label>
+            <mat-select [value]="pendingPlotConfig().legendPosition" (valueChange)="updatePendingPlotConfig('legendPosition', $event)">
+              <mat-option value="upper right">Upper Right</mat-option>
+              <mat-option value="upper left">Upper Left</mat-option>
+              <mat-option value="lower right">Lower Right</mat-option>
+              <mat-option value="lower left">Lower Left</mat-option>
+              <mat-option value="upper center">Upper Center</mat-option>
+              <mat-option value="lower center">Lower Center</mat-option>
+              <mat-option value="center">Center</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  
+  <!-- Floating Update Button -->
+  @if (hasPendingChanges()) {
+    <div class="floating-update-button">
+      <button mat-fab color="primary" (click)="applyChanges()" matTooltip="Apply Changes">
+        <mat-icon>check</mat-icon>
+      </button>
+      <button mat-mini-fab color="warn" (click)="resetChanges()" matTooltip="Reset Changes" class="reset-button">
+        <mat-icon>undo</mat-icon>
+      </button>
+    </div>
+  }
+</div>
