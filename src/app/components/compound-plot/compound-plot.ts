@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -39,12 +39,32 @@ export class CompoundPlot implements OnInit, OnDestroy {
   
   selectedCompound = signal<string>('');
   availableCompounds = signal<string[]>([]);
-  plotData: any[] = [];
-  plotLayout: any = {};
-  plotRevision: number = 0;
   compoundMetrics: any = null;
   exportFormat: string = 'png';
   referenceLineData: any = null;
+  
+  // Computed signals that automatically update when dependencies change
+  plotData = computed(() => {
+    this.buildPlotData();
+    return this._plotData;
+  });
+  
+  plotLayout = computed(() => {
+    this.buildPlotData();
+    return this._plotLayout;
+  });
+  
+  plotRevision = computed(() => {
+    // Trigger on any config change
+    const config = this.doseResponseService.plotConfig();
+    const mapping = this.doseResponseService.columnMapping();
+    const rawData = this.doseResponseService.rawData();
+    const results = this.doseResponseService.analysisResults();
+    return Date.now(); // Always return a new value to force update
+  });
+  
+  private _plotData: any[] = [];
+  private _plotLayout: any = {};
   
   plotOptions = {
     responsive: true,
@@ -55,31 +75,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
   
   ngOnInit(): void {
     this.updateAvailableCompounds();
-    this.updatePlot();
-    
-    // Watch for changes in plot config, column mapping, and data
-    effect(() => {
-      const config = this.doseResponseService.plotConfig();
-      console.log('Plot effect triggered, config dataPointColor:', config.dataPointColor);
-      this.updatePlot();
-    });
-    
-    effect(() => {
-      const mapping = this.doseResponseService.columnMapping();
-      console.log('Column mapping effect triggered');
-      this.updateAvailableCompounds();
-      this.updatePlot();
-    });
-    
-    effect(() => {
-      const rawData = this.doseResponseService.rawData();
-      const results = this.doseResponseService.analysisResults();
-      console.log('Data/results effect triggered');
-      if (rawData) {
-        this.updateAvailableCompounds();
-      }
-      this.updatePlot();
-    });
+    this.buildPlotData();
   }
   
   ngOnDestroy(): void {
@@ -98,14 +94,14 @@ export class CompoundPlot implements OnInit, OnDestroy {
   
   onCompoundChange(compound: string): void {
     this.selectedCompound.set(compound);
-    this.updatePlot();
+    this.buildPlotData();
   }
   
-  private updatePlot(): void {
+  private buildPlotData(): void {
     const compound = this.selectedCompound();
     if (!compound) {
-      this.plotData = [];
-      this.plotLayout = {};
+      this._plotData = [];
+      this._plotLayout = {};
       this.compoundMetrics = null;
       return;
     }
@@ -116,8 +112,8 @@ export class CompoundPlot implements OnInit, OnDestroy {
     const config = this.doseResponseService.plotConfig();
     
     if (!rawData || !mapping.compound || mapping.compound === '') {
-      this.plotData = [];
-      this.plotLayout = {};
+      this._plotData = [];
+      this._plotLayout = {};
       this.compoundMetrics = null;
       return;
     }
@@ -126,8 +122,8 @@ export class CompoundPlot implements OnInit, OnDestroy {
     const compoundData = rawData.filter(row => row[mapping.compound] === compound);
     
     if (compoundData.length === 0) {
-      this.plotData = [];
-      this.plotLayout = {};
+      this._plotData = [];
+      this._plotLayout = {};
       this.compoundMetrics = null;
       return;
     }
@@ -270,7 +266,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
                       (config.plotStyle === 'classic' && this.themeService.isDark());
     const axisLineColor = isDarkMode ? '#666666' : '#333333';
     
-    this.plotLayout = {
+    this._plotLayout = {
       title: {
         text: `Dose-Response Curve: ${compound}`,
         font: { size: config.titleSize || 16 }
@@ -306,8 +302,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
       annotations: this.generateAnnotations()
     };
     
-    this.plotData = traces;
-    this.plotRevision++; // Force plot update
+    this._plotData = traces;
   }
   
   private getPlotlyMarkerSymbol(style: string): string {
