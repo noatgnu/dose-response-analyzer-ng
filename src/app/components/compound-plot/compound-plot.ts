@@ -43,24 +43,35 @@ export class CompoundPlot implements OnInit, OnDestroy {
   exportFormat: string = 'png';
   referenceLineData: any = null;
   
-  // Computed signals that automatically update when dependencies change
-  plotData = computed(() => {
+  // Data computed signal - only rebuilds when data/compound changes
+  private plotDataState = computed(() => {
+    const mapping = this.doseResponseService.columnMapping();
+    const rawData = this.doseResponseService.rawData();
+    const results = this.doseResponseService.analysisResults();
+    const compound = this.selectedCompound();
+    const config = this.doseResponseService.plotConfig(); // Include config for styling
+    
+    console.log('plotDataState computed triggered');
     this.buildPlotData();
     return this._plotData;
   });
   
-  plotLayout = computed(() => {
-    this.buildPlotData();
+  // Layout computed signal - rebuilds when config OR data changes
+  private plotLayoutState = computed(() => {
+    const config = this.doseResponseService.plotConfig();
+    const data = this.plotDataState(); // Depend on data state
+    
+    console.log('plotLayoutState computed triggered, config width:', config.plotWidth);
+    this.updatePlotLayout();
     return this._plotLayout;
   });
   
+  plotData = computed(() => this.plotDataState());
+  plotLayout = computed(() => this.plotLayoutState());
   plotRevision = computed(() => {
-    // Trigger on any config change
+    // Trigger revision when config changes
     const config = this.doseResponseService.plotConfig();
-    const mapping = this.doseResponseService.columnMapping();
-    const rawData = this.doseResponseService.rawData();
-    const results = this.doseResponseService.analysisResults();
-    return Date.now(); // Always return a new value to force update
+    return Date.now();
   });
   
   private _plotData: any[] = [];
@@ -99,7 +110,10 @@ export class CompoundPlot implements OnInit, OnDestroy {
   
   private buildPlotData(): void {
     const compound = this.selectedCompound();
+    console.log('buildPlotData called, compound:', compound);
+    
     if (!compound) {
+      console.log('No compound selected');
       this._plotData = [];
       this._plotLayout = {};
       this.compoundMetrics = null;
@@ -111,7 +125,10 @@ export class CompoundPlot implements OnInit, OnDestroy {
     const results = this.doseResponseService.analysisResults();
     const config = this.doseResponseService.plotConfig();
     
+    console.log('buildPlotData - rawData length:', rawData?.length, 'mapping:', mapping, 'compound column:', mapping?.compound);
+    
     if (!rawData || !mapping.compound || mapping.compound === '') {
+      console.log('Missing rawData or mapping');
       this._plotData = [];
       this._plotLayout = {};
       this.compoundMetrics = null;
@@ -120,8 +137,10 @@ export class CompoundPlot implements OnInit, OnDestroy {
     
     // Filter data for selected compound
     const compoundData = rawData.filter(row => row[mapping.compound] === compound);
+    console.log('Filtered compound data length:', compoundData.length);
     
     if (compoundData.length === 0) {
+      console.log('No data for selected compound');
       this._plotData = [];
       this._plotLayout = {};
       this.compoundMetrics = null;
@@ -303,6 +322,58 @@ export class CompoundPlot implements OnInit, OnDestroy {
     };
     
     this._plotData = traces;
+  }
+  
+  private updatePlotLayout(): void {
+    const config = this.doseResponseService.plotConfig();
+    const compound = this.selectedCompound();
+    
+    if (!compound || this._plotData.length === 0) {
+      this._plotLayout = {};
+      return;
+    }
+    
+    // Update layout using config values
+    const styleColors = this.getPlotStyleColors(config.plotStyle);
+    const isDarkMode = config.plotStyle === 'dark_background' || 
+                      (config.plotStyle === 'classic' && this.themeService.isDark());
+    const axisLineColor = isDarkMode ? '#666666' : '#333333';
+    
+    this._plotLayout = {
+      title: {
+        text: `Dose-Response Curve: ${compound}`,
+        font: { size: config.titleSize || 16 }
+      },
+      xaxis: {
+        title: { text: 'Log Concentration', font: { size: config.textSize || 12 } },
+        type: 'log',
+        range: this.referenceLineData ? [Math.log10(this.referenceLineData.plotXMin), Math.log10(this.referenceLineData.plotXMax)] : undefined,
+        showgrid: config.gridEnabled,
+        gridcolor: `rgba(128, 128, 128, ${config.gridAlpha || 0.3})`,
+        showline: true,
+        linecolor: axisLineColor,
+        linewidth: 1,
+        zeroline: false
+      },
+      yaxis: {
+        title: { text: 'Response', font: { size: config.textSize || 12 } },
+        range: [0, 1.1],
+        showgrid: config.gridEnabled,
+        gridcolor: `rgba(128, 128, 128, ${config.gridAlpha || 0.3})`,
+        showline: true,
+        linecolor: axisLineColor,
+        linewidth: 1,
+        zeroline: false
+      },
+      width: config.plotWidth,
+      height: config.plotHeight,
+      margin: { l: 60, r: 60, t: 80, b: 60 },
+      ...styleColors,
+      font: { ...styleColors.font, family: 'Roboto, sans-serif' },
+      legend: this.getLegendConfig(config.legendPosition, config.plotStyle),
+      shapes: this.generateShapes(),
+      annotations: this.generateAnnotations()
+    };
   }
   
   private getPlotlyMarkerSymbol(style: string): string {
