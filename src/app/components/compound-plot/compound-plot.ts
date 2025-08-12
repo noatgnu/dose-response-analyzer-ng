@@ -64,6 +64,8 @@ export class CompoundPlot implements OnInit, OnDestroy {
       const rawData = this.doseResponseService.rawData();
       const results = this.doseResponseService.analysisResults();
       
+      console.log('Plot effect triggered, config:', config);
+      
       // Update compounds when data changes
       if (rawData) {
         this.updateAvailableCompounds();

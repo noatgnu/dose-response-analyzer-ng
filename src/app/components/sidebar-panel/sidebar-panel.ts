@@ -106,6 +106,7 @@ export class SidebarPanelComponent {
    * Apply all pending changes to the service
    */
   applyChanges(): void {
+    console.log('Applying changes:', this.pendingPlotConfig());
     this.doseResponseService.updateColumnMapping(this.pendingColumnMapping());
     this.doseResponseService.updatePlotConfig(this.pendingPlotConfig());
     this.hasPendingChanges.set(false);
