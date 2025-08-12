@@ -56,9 +56,18 @@ export class CompoundPlot implements OnInit, OnDestroy {
     this.updateAvailableCompounds();
     this.updatePlot();
     
-    // Watch for changes in plot config and update plot
+    // Watch for changes in plot config, column mapping, and data
     effect(() => {
       const config = this.doseResponseService.plotConfig();
+      const mapping = this.doseResponseService.columnMapping();
+      const rawData = this.doseResponseService.rawData();
+      const results = this.doseResponseService.analysisResults();
+      
+      // Update compounds when data changes
+      if (rawData) {
+        this.updateAvailableCompounds();
+      }
+      
       this.updatePlot();
     });
   }
