@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -82,6 +82,24 @@ export class SidebarPanelComponent {
     // Initialize pending values with current values
     this.pendingColumnMapping.set(this.columnMapping());
     this.pendingPlotConfig.set(this.plotConfig());
+    
+    // Sync pending values when service values change (e.g., auto-detection)
+    effect(() => {
+      const currentMapping = this.columnMapping();
+      const currentConfig = this.plotConfig();
+      
+      // Update pending values if they're currently empty/default (indicating auto-detection happened)
+      const pendingMapping = this.pendingColumnMapping();
+      if (!pendingMapping.compound && currentMapping.compound) {
+        console.log('Auto-detected column mapping, updating pending values');
+        this.pendingColumnMapping.set(currentMapping);
+      }
+      
+      // Always sync plot config if there are no pending changes
+      if (!this.hasPendingChanges()) {
+        this.pendingPlotConfig.set(currentConfig);
+      }
+    });
   }
 
   /**
