@@ -107,7 +107,17 @@ export class SidebarPanelComponent {
    */
   applyChanges(): void {
     console.log('Applying changes:', this.pendingPlotConfig());
-    this.doseResponseService.updateColumnMapping(this.pendingColumnMapping());
+    
+    // Only update column mapping if it actually changed
+    const currentMapping = this.columnMapping();
+    const pendingMapping = this.pendingColumnMapping();
+    if (JSON.stringify(currentMapping) !== JSON.stringify(pendingMapping)) {
+      console.log('Column mapping changed, updating');
+      this.doseResponseService.updateColumnMapping(pendingMapping);
+    } else {
+      console.log('Column mapping unchanged, skipping');
+    }
+    
     this.doseResponseService.updatePlotConfig(this.pendingPlotConfig());
     this.hasPendingChanges.set(false);
   }

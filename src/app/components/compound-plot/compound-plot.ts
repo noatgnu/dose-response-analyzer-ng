@@ -50,7 +50,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
     const results = this.doseResponseService.analysisResults();
     const compound = this.selectedCompound();
     
-    console.log('rawPlotState computed triggered');
+    console.log('rawPlotState computed triggered - should ONLY happen when data/compound/mapping changes');
     this.buildRawPlotData();
     return {
       rawTraces: this._rawTraces,
