@@ -43,31 +43,39 @@ export class CompoundPlot implements OnInit, OnDestroy {
   exportFormat: string = 'png';
   referenceLineData: any = null;
   
-  // Data computed signal - only rebuilds when data/compound changes
-  private plotDataState = computed(() => {
+  // Raw data state - only rebuilds when data/compound/mapping changes  
+  private rawPlotState = computed(() => {
     const mapping = this.doseResponseService.columnMapping();
     const rawData = this.doseResponseService.rawData();
     const results = this.doseResponseService.analysisResults();
     const compound = this.selectedCompound();
-    const config = this.doseResponseService.plotConfig(); // Include config for styling
     
-    console.log('plotDataState computed triggered');
-    this.buildPlotData();
-    return this._plotData;
+    console.log('rawPlotState computed triggered');
+    this.buildRawPlotData();
+    return {
+      rawTraces: this._rawTraces,
+      rawLayout: this._rawLayout
+    };
   });
   
-  // Layout computed signal - rebuilds when config OR data changes
-  private plotLayoutState = computed(() => {
+  // Styled plot data - applies current config to raw traces
+  plotData = computed(() => {
     const config = this.doseResponseService.plotConfig();
-    const data = this.plotDataState(); // Depend on data state
+    const rawState = this.rawPlotState();
     
-    console.log('plotLayoutState computed triggered, config width:', config.plotWidth);
-    this.updatePlotLayout();
-    return this._plotLayout;
+    console.log('plotData computed triggered, config width:', config.plotWidth);
+    return this.applyStylesToTraces(rawState.rawTraces, config);
   });
   
-  plotData = computed(() => this.plotDataState());
-  plotLayout = computed(() => this.plotLayoutState());
+  // Styled plot layout - applies current config to layout
+  plotLayout = computed(() => {
+    const config = this.doseResponseService.plotConfig();
+    const rawState = this.rawPlotState();
+    
+    console.log('plotLayout computed triggered, config width:', config.plotWidth);
+    return this.applyStylesToLayout(rawState.rawLayout, config);
+  });
+  
   plotRevision = computed(() => {
     // Trigger revision when config changes
     const config = this.doseResponseService.plotConfig();
@@ -76,6 +84,8 @@ export class CompoundPlot implements OnInit, OnDestroy {
   
   private _plotData: any[] = [];
   private _plotLayout: any = {};
+  private _rawTraces: any[] = [];
+  private _rawLayout: any = {};
   
   plotOptions = {
     responsive: true,
@@ -86,7 +96,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
   
   ngOnInit(): void {
     this.updateAvailableCompounds();
-    this.buildPlotData();
+    this.buildRawPlotData();
   }
   
   ngOnDestroy(): void {
@@ -105,17 +115,17 @@ export class CompoundPlot implements OnInit, OnDestroy {
   
   onCompoundChange(compound: string): void {
     this.selectedCompound.set(compound);
-    this.buildPlotData();
+    this.buildRawPlotData();
   }
   
-  private buildPlotData(): void {
+  private buildRawPlotData(): void {
     const compound = this.selectedCompound();
     console.log('buildPlotData called, compound:', compound);
     
     if (!compound) {
       console.log('No compound selected');
-      this._plotData = [];
-      this._plotLayout = {};
+      this._rawTraces = [];
+      this._rawLayout = {};
       this.compoundMetrics = null;
       return;
     }
@@ -129,8 +139,8 @@ export class CompoundPlot implements OnInit, OnDestroy {
     
     if (!rawData || !mapping.compound || mapping.compound === '') {
       console.log('Missing rawData or mapping');
-      this._plotData = [];
-      this._plotLayout = {};
+      this._rawTraces = [];
+      this._rawLayout = {};
       this.compoundMetrics = null;
       return;
     }
@@ -141,8 +151,8 @@ export class CompoundPlot implements OnInit, OnDestroy {
     
     if (compoundData.length === 0) {
       console.log('No data for selected compound');
-      this._plotData = [];
-      this._plotLayout = {};
+      this._rawTraces = [];
+      this._rawLayout = {};
       this.compoundMetrics = null;
       return;
     }
@@ -163,12 +173,6 @@ export class CompoundPlot implements OnInit, OnDestroy {
       mode: 'markers',
       type: 'scatter',
       name: `${compound} (data)`,
-      marker: {
-        color: config.dataPointColor,
-        size: config.dataPointSize,
-        opacity: config.dataPointAlpha,
-        symbol: this.getPlotlyMarkerSymbol(config.pointMarkerStyle)
-      },
       showlegend: true
     });
     
@@ -200,12 +204,6 @@ export class CompoundPlot implements OnInit, OnDestroy {
           mode: 'lines',
           type: 'scatter',
           name: `${compound} (${modelData?.Model || 'fitted'})`,
-          line: {
-            color: config.lineColor,
-            width: config.lineThickness,
-            opacity: config.lineAlpha,
-            dash: this.getPlotlyLineDash(config.lineStyle)
-          },
           showlegend: true
         });
         
@@ -279,21 +277,65 @@ export class CompoundPlot implements OnInit, OnDestroy {
       };
     }
     
-    // Update layout using config values
+    // Store raw traces and basic layout (no styling)
+    this._rawTraces = traces;
+    this._rawLayout = {
+      title: { text: `Dose-Response Curve: ${compound}` },
+      xaxis: {
+        title: { text: 'Log Concentration' },
+        type: 'log',
+        range: this.referenceLineData ? [Math.log10(this.referenceLineData.plotXMin), Math.log10(this.referenceLineData.plotXMax)] : undefined
+      },
+      yaxis: {
+        title: { text: 'Response' },
+        range: [0, 1.1]
+      },
+      margin: { l: 60, r: 60, t: 80, b: 60 }
+    };
+  }
+  
+  private applyStylesToTraces(rawTraces: any[], config: any): any[] {
+    return rawTraces.map(trace => {
+      const styledTrace = { ...trace };
+      
+      if (trace.mode === 'markers') {
+        // Data points styling
+        styledTrace.marker = {
+          color: config.dataPointColor,
+          size: config.dataPointSize,
+          opacity: config.dataPointAlpha,
+          symbol: this.getPlotlyMarkerSymbol(config.pointMarkerStyle)
+        };
+      } else if (trace.mode === 'lines') {
+        // Fitted line styling
+        styledTrace.line = {
+          color: config.lineColor,
+          width: config.lineThickness,
+          opacity: config.lineAlpha,
+          dash: this.getPlotlyLineDash(config.lineStyle)
+        };
+      }
+      
+      return styledTrace;
+    });
+  }
+  
+  private applyStylesToLayout(rawLayout: any, config: any): any {
+    const compound = this.selectedCompound();
     const styleColors = this.getPlotStyleColors(config.plotStyle);
     const isDarkMode = config.plotStyle === 'dark_background' || 
                       (config.plotStyle === 'classic' && this.themeService.isDark());
     const axisLineColor = isDarkMode ? '#666666' : '#333333';
     
-    this._plotLayout = {
+    return {
+      ...rawLayout,
       title: {
-        text: `Dose-Response Curve: ${compound}`,
+        ...rawLayout.title,
         font: { size: config.titleSize || 16 }
       },
       xaxis: {
-        title: { text: 'Log Concentration', font: { size: config.textSize || 12 } },
-        type: 'log',
-        range: this.referenceLineData ? [Math.log10(this.referenceLineData.plotXMin), Math.log10(this.referenceLineData.plotXMax)] : undefined,
+        ...rawLayout.xaxis,
+        title: { ...rawLayout.xaxis.title, font: { size: config.textSize || 12 } },
         showgrid: config.gridEnabled,
         gridcolor: `rgba(128, 128, 128, ${config.gridAlpha || 0.3})`,
         showline: true,
@@ -302,8 +344,8 @@ export class CompoundPlot implements OnInit, OnDestroy {
         zeroline: false
       },
       yaxis: {
-        title: { text: 'Response', font: { size: config.textSize || 12 } },
-        range: [0, 1.1],
+        ...rawLayout.yaxis,
+        title: { ...rawLayout.yaxis.title, font: { size: config.textSize || 12 } },
         showgrid: config.gridEnabled,
         gridcolor: `rgba(128, 128, 128, ${config.gridAlpha || 0.3})`,
         showline: true,
@@ -313,15 +355,12 @@ export class CompoundPlot implements OnInit, OnDestroy {
       },
       width: config.plotWidth,
       height: config.plotHeight,
-      margin: { l: 60, r: 60, t: 80, b: 60 },
       ...styleColors,
       font: { ...styleColors.font, family: 'Roboto, sans-serif' },
       legend: this.getLegendConfig(config.legendPosition, config.plotStyle),
       shapes: this.generateShapes(),
       annotations: this.generateAnnotations()
     };
-    
-    this._plotData = traces;
   }
   
   private updatePlotLayout(): void {
