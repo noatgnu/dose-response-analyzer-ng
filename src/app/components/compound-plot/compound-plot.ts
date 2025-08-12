@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -55,6 +55,12 @@ export class CompoundPlot implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.updateAvailableCompounds();
     this.updatePlot();
+    
+    // Watch for changes in plot config and update plot
+    effect(() => {
+      const config = this.doseResponseService.plotConfig();
+      this.updatePlot();
+    });
   }
   
   ngOnDestroy(): void {
