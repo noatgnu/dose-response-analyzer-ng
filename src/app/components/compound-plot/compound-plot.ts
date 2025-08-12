@@ -33,7 +33,6 @@ export class CompoundPlot implements OnInit, OnDestroy {
   private doseResponseService = inject(DoseResponseService);
   private plotlyService = inject(PlotlyService);
   private themeService = inject(ThemeService);
-  private updateInterval?: number;
   
   plotDivId = 'compound-plot-div';
   private graphDiv: any = null;
@@ -56,18 +55,10 @@ export class CompoundPlot implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.updateAvailableCompounds();
     this.updatePlot();
-    
-    // Set up periodic updates to check for new data
-    this.updateInterval = window.setInterval(() => {
-      this.updateAvailableCompounds();
-      this.updatePlot();
-    }, 1000);
   }
   
   ngOnDestroy(): void {
-    if (this.updateInterval) {
-      clearInterval(this.updateInterval);
-    }
+    // No cleanup needed
   }
   
   private updateAvailableCompounds(): void {
@@ -99,7 +90,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
     const results = this.doseResponseService.analysisResults();
     const config = this.doseResponseService.plotConfig();
     
-    if (!rawData || !mapping.compound) {
+    if (!rawData || !mapping.compound || mapping.compound === '') {
       this.plotData = [];
       this.plotLayout = {};
       this.compoundMetrics = null;
