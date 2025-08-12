@@ -626,17 +626,18 @@ export class CompoundPlot implements OnInit, OnDestroy {
   }
 
   async exportPlot(format: string = 'png'): Promise<void> {
-    if (this.plotData.length === 0 || !this.graphDiv) return;
+    if (this.plotData().length === 0 || !this.graphDiv) return;
     
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
     const filename = `${this.selectedCompound()}_plot_${timestamp}`;
     
     const plot = await this.plotlyService.getPlotly();
+    const layout = this.plotLayout();
     await plot.downloadImage(this.graphDiv, {
       format: format,
       filename: filename,
-      width: this.plotLayout.width || 800,
-      height: this.plotLayout.height || 600
+      width: layout.width || 800,
+      height: layout.height || 600
     });
   }
 }
