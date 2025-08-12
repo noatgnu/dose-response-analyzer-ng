@@ -60,17 +60,24 @@ export class CompoundPlot implements OnInit, OnDestroy {
     // Watch for changes in plot config, column mapping, and data
     effect(() => {
       const config = this.doseResponseService.plotConfig();
+      console.log('Plot effect triggered, config dataPointColor:', config.dataPointColor);
+      this.updatePlot();
+    });
+    
+    effect(() => {
       const mapping = this.doseResponseService.columnMapping();
+      console.log('Column mapping effect triggered');
+      this.updateAvailableCompounds();
+      this.updatePlot();
+    });
+    
+    effect(() => {
       const rawData = this.doseResponseService.rawData();
       const results = this.doseResponseService.analysisResults();
-      
-      console.log('Plot effect triggered, config:', config);
-      
-      // Update compounds when data changes
+      console.log('Data/results effect triggered');
       if (rawData) {
         this.updateAvailableCompounds();
       }
-      
       this.updatePlot();
     });
   }
