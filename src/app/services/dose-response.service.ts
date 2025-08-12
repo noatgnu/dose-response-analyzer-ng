@@ -344,7 +344,8 @@ MP-1-008,100.0,0.25,1`;
    */
   updatePlotConfig(config: Partial<PlotConfig>): void {
     console.log('Service updating plot config:', config);
-    this.plotConfig.update(current => ({ ...current, ...config }));
+    const oldConfig = this.plotConfig();
+    this.plotConfig.set({ ...oldConfig, ...config });
     console.log('New plot config:', this.plotConfig());
   }
   
