@@ -22,12 +22,12 @@
     
     <!-- Plot -->
     <div class="plot-container">
-      @if (plotData.length > 0) {
+      @if (plotData().length > 0) {
         <plotly-plot 
-          [data]="plotData" 
-          [layout]="plotLayout" 
+          [data]="plotData()" 
+          [layout]="plotLayout()" 
           [config]="plotOptions"
-          [revision]="plotRevision"
+          [revision]="plotRevision()"
           [useResizeHandler]="true"
           [divId]="plotDivId"
           (initialized)="onPlotInitialized($event)">
@@ -66,7 +66,7 @@
     }
   </mat-card-content>
   
-  @if (plotData.length > 0) {
+  @if (plotData().length > 0) {
     <mat-card-actions align="end">
       <mat-form-field appearance="outline" style="width: 80px; margin-right: 8px;">
         <mat-select [(value)]="exportFormat">
@@ -74,7 +74,7 @@
           <mat-option value="svg">SVG</mat-option>
         </mat-select>
       </mat-form-field>
-      <button mat-button (click)="exportPlot(exportFormat)" [disabled]="!plotData.length">
+      <button mat-button (click)="exportPlot(exportFormat)" [disabled]="!plotData().length">
         <mat-icon>download</mat-icon>
         Export Plot
       </button>
