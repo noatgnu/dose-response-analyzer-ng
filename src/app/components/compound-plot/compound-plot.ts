@@ -41,6 +41,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
   availableCompounds = signal<string[]>([]);
   plotData: any[] = [];
   plotLayout: any = {};
+  plotRevision: number = 0;
   compoundMetrics: any = null;
   exportFormat: string = 'png';
   referenceLineData: any = null;
@@ -297,6 +298,7 @@ export class CompoundPlot implements OnInit, OnDestroy {
     };
     
     this.plotData = traces;
+    this.plotRevision++; // Force plot update
   }
   
   private getPlotlyMarkerSymbol(style: string): string {
