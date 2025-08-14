@@ -6,8 +6,8 @@
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <!-- Compound Selector -->
-    @if (availableCompounds().length > 0) {
+    <!-- Compound Selector - only show in single compound mode -->
+    @if (availableCompounds().length > 0 && !isGroupedMode()) {
       <div class="compound-selector" style="margin-bottom: 20px;">
         <mat-form-field appearance="outline">
           <mat-label>Select Compound</mat-label>

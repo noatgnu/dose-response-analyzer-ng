@@ -43,14 +43,14 @@ export class CompoundPlot implements OnInit, OnDestroy {
   exportFormat: string = 'png';
   referenceLineData: any = null;
   
-  // Raw data state - only rebuilds when data/compound/mapping changes  
+  // Raw data state - only rebuilds when data/compound/mapping/grouping changes  
   private rawPlotState = computed(() => {
     const mapping = this.doseResponseService.columnMapping();
     const rawData = this.doseResponseService.rawData();
     const results = this.doseResponseService.analysisResults();
     const compound = this.selectedCompound();
+    const config = this.doseResponseService.plotConfig();
     
-    console.log('rawPlotState computed triggered - should ONLY happen when data/compound/mapping changes');
     this.buildRawPlotData();
     return {
       rawTraces: this._rawTraces,
@@ -117,40 +117,19 @@ export class CompoundPlot implements OnInit, OnDestroy {
     this.selectedCompound.set(compound);
     this.buildRawPlotData();
   }
+
+  isGroupedMode(): boolean {
+    return this.doseResponseService.plotConfig().groupAllCompounds;
+  }
   
   private buildRawPlotData(): void {
-    const compound = this.selectedCompound();
-    console.log('buildPlotData called, compound:', compound);
-    
-    if (!compound) {
-      console.log('No compound selected');
-      this._rawTraces = [];
-      this._rawLayout = {};
-      this.compoundMetrics = null;
-      return;
-    }
-    
     const rawData = this.doseResponseService.rawData();
     const mapping = this.doseResponseService.columnMapping();
     const results = this.doseResponseService.analysisResults();
     const config = this.doseResponseService.plotConfig();
-    
-    console.log('buildPlotData - rawData length:', rawData?.length, 'mapping:', mapping, 'compound column:', mapping?.compound);
+    const compound = this.selectedCompound();
     
     if (!rawData || !mapping.compound || mapping.compound === '') {
-      console.log('Missing rawData or mapping');
-      this._rawTraces = [];
-      this._rawLayout = {};
-      this.compoundMetrics = null;
-      return;
-    }
-    
-    // Filter data for selected compound
-    const compoundData = rawData.filter(row => row[mapping.compound] === compound);
-    console.log('Filtered compound data length:', compoundData.length);
-    
-    if (compoundData.length === 0) {
-      console.log('No data for selected compound');
       this._rawTraces = [];
       this._rawLayout = {};
       this.compoundMetrics = null;
@@ -158,27 +137,160 @@ export class CompoundPlot implements OnInit, OnDestroy {
     }
     
     const traces: any[] = [];
+    let allXData: number[] = [];
+    let allYData: number[] = [];
     
-    // Add data points
-    const xData = compoundData
-      .map(row => parseFloat(row[mapping.concentration]))
-      .filter(val => !isNaN(val));
-    const yData = compoundData
-      .map(row => parseFloat(row[mapping.response]))
-      .filter(val => !isNaN(val));
+    if (config.groupAllCompounds) {
+      // Group all compounds in single plot
+      const compounds = this.doseResponseService.getCompounds();
+      const colors = this.generateCompoundColors(compounds.length);
+      
+      compounds.forEach((compoundName, index) => {
+        const compoundData = rawData.filter(row => row[mapping.compound] === compoundName);
+        
+        if (compoundData.length > 0) {
+          const xData = compoundData
+            .map(row => parseFloat(row[mapping.concentration]))
+            .filter(val => !isNaN(val));
+          const yData = compoundData
+            .map(row => parseFloat(row[mapping.response]))
+            .filter(val => !isNaN(val));
+          
+          // Add data points trace
+          traces.push({
+            x: xData,
+            y: yData,
+            mode: 'markers',
+            type: 'scatter',
+            name: `${compoundName} (data)`,
+            showlegend: true,
+            marker: { color: colors[index] }
+          });
+          
+          // Add fitted curve if available
+          if (results && results.bestFittedModels && results.bestFittedModels[compoundName]) {
+            const compoundResult = results.bestFittedModels[compoundName];
+            const bestModelsData = results.bestModels.toArray();
+            const modelData = bestModelsData.find((model: any) => model.Compound === compoundName);
+            
+            try {
+              const curve = this.doseResponseService.generateCurve(compoundResult, 200);
+              
+              traces.push({
+                x: curve.concentration,
+                y: curve.response,
+                mode: 'lines',
+                type: 'scatter',
+                name: `${compoundName} (${modelData?.Model || 'fitted'})`,
+                showlegend: true,
+                line: { color: colors[index] }
+              });
+            } catch (error) {
+              // Continue if curve generation fails
+            }
+          }
+          
+          allXData.push(...xData);
+          allYData.push(...yData);
+        }
+      });
+      
+      // Set compound metrics for selected compound if available
+      if (compound && results && results.bestFittedModels && results.bestFittedModels[compound]) {
+        const compoundResult = results.bestFittedModels[compound];
+        const bestModelsData = results.bestModels.toArray();
+        const modelData = bestModelsData.find((model: any) => model.Compound === compound);
+        
+        this.compoundMetrics = {
+          model: modelData?.Model || 'N/A',
+          ic50: compoundResult.modelResult.ic50,
+          rmse: modelData?.RMSE || compoundResult.modelResult.rmse,
+          aic: modelData?.AIC
+        };
+      } else {
+        this.compoundMetrics = null;
+      }
+      
+    } else {
+      // Single compound display (original behavior)
+      if (!compound) {
+        this._rawTraces = [];
+        this._rawLayout = {};
+        this.compoundMetrics = null;
+        return;
+      }
+      
+      const compoundData = rawData.filter(row => row[mapping.compound] === compound);
+      
+      if (compoundData.length === 0) {
+        this._rawTraces = [];
+        this._rawLayout = {};
+        this.compoundMetrics = null;
+        return;
+      }
+      
+      // Add data points
+      const xData = compoundData
+        .map(row => parseFloat(row[mapping.concentration]))
+        .filter(val => !isNaN(val));
+      const yData = compoundData
+        .map(row => parseFloat(row[mapping.response]))
+        .filter(val => !isNaN(val));
+      
+      traces.push({
+        x: xData,
+        y: yData,
+        mode: 'markers',
+        type: 'scatter',
+        name: `${compound} (data)`,
+        showlegend: true
+      });
+      
+      allXData = xData;
+      allYData = yData;
+      
+      // Add fitted curve if analysis results available
+      if (results && results.bestFittedModels && results.bestFittedModels[compound]) {
+        const compoundResult = results.bestFittedModels[compound];
+        const bestModelsData = results.bestModels.toArray();
+        const modelData = bestModelsData.find((model: any) => model.Compound === compound);
+        
+        try {
+          const curve = this.doseResponseService.generateCurve(compoundResult, 200);
+          
+          traces.push({
+            x: curve.concentration,
+            y: curve.response,
+            mode: 'lines',
+            type: 'scatter',
+            name: `${compound} (${modelData?.Model || 'fitted'})`,
+            showlegend: true
+          });
+          
+          // Update metrics
+          this.compoundMetrics = {
+            model: modelData?.Model || 'N/A',
+            ic50: compoundResult.modelResult.ic50,
+            rmse: modelData?.RMSE || compoundResult.modelResult.rmse,
+            aic: modelData?.AIC
+          };
+        } catch (error) {
+          // Still show metrics even if curve generation fails
+          this.compoundMetrics = {
+            model: modelData?.Model || 'N/A',
+            ic50: null,
+            rmse: modelData?.RMSE,
+            aic: modelData?.AIC
+          };
+        }
+      } else {
+        this.compoundMetrics = null;
+      }
+    }
     
-    traces.push({
-      x: xData,
-      y: yData,
-      mode: 'markers',
-      type: 'scatter',
-      name: `${compound} (data)`,
-      showlegend: true
-    });
-    
-    // Calculate x-axis range even without fitted curve (for consistent plot boundaries)
-    const dataXMin = Math.min(...xData.filter(x => x > 0)); // Only positive values
-    const dataXMax = Math.max(...xData.filter(x => x > 0));
+    // Calculate x-axis range using all data
+    const dataXMin = Math.min(...allXData.filter(x => x > 0)); // Only positive values
+    const dataXMax = Math.max(...allXData.filter(x => x > 0));
     
     // Validate data ranges to prevent extreme values
     if (!isFinite(dataXMin) || !isFinite(dataXMax) || dataXMin <= 0 || dataXMax <= 0) {
@@ -226,12 +338,13 @@ export class CompoundPlot implements OnInit, OnDestroy {
         const ic50Response = (top + bottom) / 2;
         
         // Calculate observed Dmax: mean response at maximum concentration (like Streamlit)
-        const maxConcentration = Math.max(...xData);
+        const maxConcentration = Math.max(...allXData);
+        const compoundData = rawData.filter(row => row[mapping.compound] === compound);
         const maxConcResponses = compoundData
-          .filter(row => parseFloat(row[mapping.concentration]) === maxConcentration)
-          .map(row => parseFloat(row[mapping.response]))
-          .filter(val => !isNaN(val));
-        const observedDmax = maxConcResponses.reduce((sum, val) => sum + val, 0) / maxConcResponses.length;
+          .filter((row: any) => parseFloat(row[mapping.concentration]) === maxConcentration)
+          .map((row: any) => parseFloat(row[mapping.response]))
+          .filter((val: any) => !isNaN(val));
+        const observedDmax = maxConcResponses.reduce((sum: any, val: any) => sum + val, 0) / maxConcResponses.length;
         
         // Predicted Dmax: bottom parameter (representing 100% inhibition)
         const predictedDmax = bottom;
@@ -279,8 +392,12 @@ export class CompoundPlot implements OnInit, OnDestroy {
     
     // Store raw traces and basic layout (no styling)
     this._rawTraces = traces;
+    const plotTitle = config.groupAllCompounds ? 
+      'Dose-Response Curves: All Compounds' : 
+      `Dose-Response Curve: ${compound}`;
+      
     this._rawLayout = {
-      title: { text: `Dose-Response Curve: ${compound}` },
+      title: { text: plotTitle },
       xaxis: {
         title: { text: 'Log Concentration' },
         type: 'log',
@@ -294,26 +411,58 @@ export class CompoundPlot implements OnInit, OnDestroy {
     };
   }
   
+  private generateCompoundColors(count: number): string[] {
+    const colors = [
+      '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+      '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+      '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
+      '#c49c94', '#f7b6d3', '#c7c7c7', '#dbdb8d', '#9edae5'
+    ];
+    
+    // Repeat colors if we have more compounds than colors
+    const result: string[] = [];
+    for (let i = 0; i < count; i++) {
+      result.push(colors[i % colors.length]);
+    }
+    return result;
+  }
+
   private applyStylesToTraces(rawTraces: any[], config: any): any[] {
     return rawTraces.map(trace => {
       const styledTrace = { ...trace };
       
       if (trace.mode === 'markers') {
-        // Data points styling
-        styledTrace.marker = {
-          color: config.dataPointColor,
+        // Data points styling - preserve individual colors in grouped mode
+        const markerConfig: any = {
           size: config.dataPointSize,
           opacity: config.dataPointAlpha,
           symbol: this.getPlotlyMarkerSymbol(config.pointMarkerStyle)
         };
+        
+        // Use individual colors if already set (grouped mode), otherwise use global color
+        if (trace.marker?.color) {
+          markerConfig.color = trace.marker.color;
+        } else {
+          markerConfig.color = config.dataPointColor;
+        }
+        
+        styledTrace.marker = markerConfig;
       } else if (trace.mode === 'lines') {
-        // Fitted line styling
-        styledTrace.line = {
-          color: config.lineColor,
+        // Fitted line styling - preserve individual colors in grouped mode
+        const lineConfig: any = {
           width: config.lineThickness,
           opacity: config.lineAlpha,
           dash: this.getPlotlyLineDash(config.lineStyle)
         };
+        
+        // Use individual colors if already set (grouped mode), otherwise use global color
+        if (trace.line?.color) {
+          lineConfig.color = trace.line.color;
+        } else {
+          lineConfig.color = config.lineColor;
+        }
+        
+        styledTrace.line = lineConfig;
       }
       
       return styledTrace;

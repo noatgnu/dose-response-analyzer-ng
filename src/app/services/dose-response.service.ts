@@ -13,6 +13,7 @@ export interface ColumnMapping {
   compound: string;
   concentration: string;
   response: string;
+  logTransformed: boolean;
 }
 
 export interface PlotConfig {
@@ -42,6 +43,8 @@ export interface PlotConfig {
   titleSize?: number;
   gridAlpha?: number;
   gridStyle?: string;
+  // Compound grouping
+  groupAllCompounds: boolean;
 }
 
 @Injectable({
@@ -62,7 +65,8 @@ export class DoseResponseService {
   public columnMapping = signal<ColumnMapping>({
     compound: '',
     concentration: '',
-    response: ''
+    response: '',
+    logTransformed: false
   });
   
   public plotConfig = signal<PlotConfig>({
@@ -91,7 +95,9 @@ export class DoseResponseService {
     textSize: 12,
     titleSize: 16,
     gridAlpha: 0.3,
-    gridStyle: 'solid'
+    gridStyle: 'solid',
+    // Compound grouping
+    groupAllCompounds: false
   });
   
   // Sample data files
@@ -189,7 +195,8 @@ MP-1-008,100.0,0.25,1`;
     let mapping: ColumnMapping = {
       compound: columns[0],
       concentration: columns[0],
-      response: columns[0]
+      response: columns[0],
+      logTransformed: false
     };
     
     // Look for exact matches first
@@ -267,14 +274,24 @@ MP-1-008,100.0,0.25,1`;
         const concValue = parseFloat(row[mapping.concentration]);
         const respValue = parseFloat(row[mapping.response]);
         
-        return hasCompound && !isNaN(concValue) && !isNaN(respValue) && concValue > 0;
+        // If data is log-transformed, allow negative values (since log of small positive numbers is negative)
+        const validConcentration = mapping.logTransformed ? 
+          !isNaN(concValue) : 
+          !isNaN(concValue) && concValue > 0;
+        
+        return hasCompound && validConcentration && !isNaN(respValue);
       })
-      .map(row => ({
-        ...row,
-        [mapping.concentration]: parseFloat(row[mapping.concentration]),
-        [mapping.response]: parseFloat(row[mapping.response]),
-        [mapping.compound]: String(row[mapping.compound]).trim()
-      }));
+      .map(row => {
+        const concValue = parseFloat(row[mapping.concentration]);
+        return {
+          ...row,
+          [mapping.concentration]: mapping.logTransformed ? 
+            Math.pow(10, concValue) : // Convert log-transformed back to linear for analysis
+            concValue,
+          [mapping.response]: parseFloat(row[mapping.response]),
+          [mapping.compound]: String(row[mapping.compound]).trim()
+        };
+      });
   }
   
   /**

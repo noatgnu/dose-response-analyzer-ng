@@ -71,6 +71,16 @@
             </mat-select>
             <mat-hint>Column containing response/measurement values</mat-hint>
           </mat-form-field>
+
+          <!-- Log Transformation -->
+          <mat-checkbox
+            [checked]="pendingColumnMapping().logTransformed"
+            (change)="updatePendingColumnMapping('logTransformed', $event.checked)">
+            Concentration already log-transformed
+          </mat-checkbox>
+          <div class="checkbox-hint">
+            <span>Check this if your concentration values are already log-transformed</span>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
@@ -288,6 +298,15 @@
         <!-- Advanced Styling -->
         <div class="config-section">
           <h4>Plot Style</h4>
+
+          <mat-checkbox
+            [checked]="pendingPlotConfig().groupAllCompounds"
+            (change)="updatePendingPlotConfig('groupAllCompounds', $event.checked)">
+            Group all compounds in single plot
+          </mat-checkbox>
+          <div class="checkbox-hint">
+            <span>Show all compounds together on one plot instead of separately</span>
+          </div>
 
           <mat-form-field appearance="outline">
             <mat-label>Plot Style</mat-label>

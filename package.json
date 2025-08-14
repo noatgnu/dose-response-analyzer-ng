@@ -33,7 +33,7 @@
     "@types/plotly.js": "^3.0.3",
     "angular-plotly.js": "^20.0.0",
     "data-forge": "^1.10.4",
-    "dose-analyzer-response": "^1.0.1",
+    "dose-analyzer-response": "^1.0.2",
     "ngx-color-picker": "^20.1.0",
     "ngx-colors": "^3.6.0",
     "papaparse": "^5.5.3",

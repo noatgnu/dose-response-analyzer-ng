@@ -43,7 +43,7 @@ export class SidebarPanelComponent {
   hasData = computed(() => this.doseResponseService.rawData() !== null);
   
   // Local state for pending changes
-  pendingColumnMapping = signal<ColumnMapping>({ compound: '', concentration: '', response: '' });
+  pendingColumnMapping = signal<ColumnMapping>({ compound: '', concentration: '', response: '', logTransformed: false });
   pendingPlotConfig = signal<PlotConfig>({
     plotWidth: 800,
     plotHeight: 600,
@@ -67,7 +67,8 @@ export class SidebarPanelComponent {
     textSize: 12,
     titleSize: 16,
     gridAlpha: 0.3,
-    gridStyle: 'solid'
+    gridStyle: 'solid',
+    groupAllCompounds: false
   });
   
   hasPendingChanges = signal(false);
@@ -105,7 +106,7 @@ export class SidebarPanelComponent {
   /**
    * Update pending column mapping (doesn't apply immediately)
    */
-  updatePendingColumnMapping(field: keyof ColumnMapping, value: string): void {
+  updatePendingColumnMapping(field: keyof ColumnMapping, value: string | boolean): void {
     const current = this.pendingColumnMapping();
     this.pendingColumnMapping.set({ ...current, [field]: value });
     this.hasPendingChanges.set(true);
